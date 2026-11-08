@@ -1,5 +1,6 @@
 # ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24054470.svg)](https://doi.org/10.5281/zenodo.24054470)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
@@ -155,7 +156,7 @@ See [`data/README.md`](data/README.md) for the complete field-level specificatio
 
 ## Citation
 
-If you use the ReconRAG framework, reconciliation cascade, or benchmark dataset in your research, please cite our paper:
+If you use the ReconRAG framework, reconciliation cascade, or benchmark dataset in your research, please cite our paper and dataset:
 
 ```bibtex
 @article{solaeman2026reconrag,
@@ -164,6 +165,15 @@ If you use the ReconRAG framework, reconciliation cascade, or benchmark dataset 
   journal={arXiv preprint arXiv:2611.XXXXX},
   year={2026},
   url={https://github.com/solaemanachmad/ReconRAG}
+}
+
+@misc{solaeman2026dataset,
+  author={Solaeman, Achmad and Wibirama, Sunu},
+  title={{ReconRAG}: Benchmark Dataset and Reproducibility Package for Versioned Regulatory {RAG}},
+  year={2026},
+  publisher={Zenodo},
+  doi={10.5281/zenodo.24054470},
+  url={https://doi.org/10.5281/zenodo.24054470}
 }
 ```
 
