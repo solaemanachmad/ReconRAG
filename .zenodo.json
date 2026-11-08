@@ -1,0 +1,26 @@
+{
+  "title": "ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations (Code and Benchmark Dataset)",
+  "upload_type": "dataset",
+  "description": "Official reproducibility package and public benchmark dataset for ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations. Includes 57 Indonesian ministerial regulation pairs (1,199 amendment provisions with deterministic gold labels and 444 full-replacement provisions with three-model silver labels), 418 rule-validated benchmark questions, 5,852 graded model answers, and the complete Python implementation of the three-layer reconciliation cascade and evaluation suite.",
+  "creators": [
+    {
+      "name": "Solaeman, Achmad",
+      "affiliation": "Department of Electrical Engineering and Informatics, Vocational College, Universitas Gadjah Mada"
+    },
+    {
+      "name": "Wibirama, Sunu",
+      "affiliation": "Department of Electrical Engineering and Information Technology, Universitas Gadjah Mada"
+    }
+  ],
+  "license": "CC-BY-4.0",
+  "access_right": "open",
+  "keywords": [
+    "retrieval-augmented generation",
+    "version reconciliation",
+    "legal NLP",
+    "regulatory compliance",
+    "Indonesian law",
+    "integer linear programming",
+    "knowledge conflicts"
+  ]
+}

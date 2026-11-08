@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reconrag"
+version = "1.0.0"
+description = "ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Achmad Solaeman", email = "achmad.solaeman@ugm.ac.id" },
+    { name = "Sunu Wibirama", email = "sunu@ugm.ac.id" }
+]
+keywords = [
+    "retrieval-augmented-generation",
+    "legal-nlp",
+    "regulatory-compliance",
+    "version-reconciliation",
+    "integer-linear-programming",
+    "indonesian-law"
+]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "pypdfium2>=4.25",
+    "rank-bm25>=0.2.2",
+]
+
+[project.optional-dependencies]
+dense = [
+    "sentence-transformers>=2.6.0",
+]
+dev = [
+    "pytest>=8.0",
+    "matplotlib>=3.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
