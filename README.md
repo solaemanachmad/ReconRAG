@@ -49,9 +49,10 @@ ReconRAG/
 │   ├── model_answers.jsonl          # 5,852 answers with judge labels
 │   ├── layer3_decisions.jsonl       # cached layer-3 decisions
 │   ├── judge_validation.csv         # 53 answers labelled by a human rater
+│   ├── replacement_verification.csv # 50 consensus labels verified by one author
 │   └── texts/                       # extracted regulation texts, one JSON per regulation
 ├── results/                         # written by main.py (reference copy included)
-│   ├── amendments.csv  replacements.csv  retrieval.csv
+│   ├── amendments.csv  replacements.csv  verification.csv  retrieval.csv
 │   ├── answers.csv  significance.csv  judge.csv
 │   ├── summary.md                   # all tables in one readable file
 │   └── figures/                     # paper figures (PDF)
@@ -73,7 +74,7 @@ Options:
 
 ```bash
 python main.py --dense                     # also Dense (multilingual MiniLM) and hybrid RRF retrieval
-python main.py --only answers judge        # selected parts: amendments replacements retrieval answers judge figures
+python main.py --only answers judge        # selected parts: amendments replacements verification retrieval answers judge figures
 python main.py --check                     # recompute and compare with results/ (also run in CI)
 python main.py --demo                      # small example of ingest-time reconciliation
 ```
@@ -84,6 +85,7 @@ python main.py --demo                      # small example of ingest-time reconc
 |---|---|---|
 | `amendments.csv` | Table (Tier 1) | per-provision vs. global matching, character ratio vs. diff, layer 3 |
 | `replacements.csv` | Figure (full replacements) | macro-F1 against four silver references, escalation load |
+| `verification.csv` | Benchmark section | human verification of 50 consensus labels (agreement, Wilson CI, time) |
 | `retrieval.csv` | Table (retrieval) | what reaches the generator, four retrievers |
 | `answers.csv` | Tables (answers) and figures | accuracy, stale rate with 95% CI, accuracy per question type, tokens |
 | `significance.csv` | Appendix | exact McNemar tests with Holm correction |

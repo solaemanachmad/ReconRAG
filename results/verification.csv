@@ -1,0 +1,6 @@
+status,n,agreed,agreement,wilson_low,wilson_high,median_seconds,total_minutes
+all,50,50,1.0,0.929,1.0,6.0,18.3
+unchanged,20,20,1.0,0.839,1.0,5.5,3.0
+amended,21,21,1.0,0.845,1.0,12.0,14.1
+deleted,5,5,1.0,0.566,1.0,4.0,0.6
+non_substantive,4,4,1.0,0.51,1.0,9.5,0.7

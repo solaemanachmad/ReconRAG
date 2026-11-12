@@ -126,7 +126,16 @@ Stratified sample of answers labelled by one of the authors without seeing the a
 - `sample_id`, `question_id`, `generator_model`, `condition`
 - `human_label`, `llm_judge_label`, `token_rule_label` (labels as in `model_answers.jsonl`)
 
-### 2.9 Known artifacts
+### 2.9 `replacement_verification.csv` (50 provisions)
+Human check of the three-model consensus on full replacements. A stratified random sample (seed 2026) of 50 provisions on which all three annotators agree was verified by one of the authors, who saw the proposed status and successors and either confirmed them or entered a correction:
+- `sample_id`, `provision_id`, `new_regulation_id`, `split`
+- `consensus_status`, `consensus_successors`: the proposal shown (statuses as in `replacement_provisions.jsonl`)
+- `human_agrees` (`yes`/`no`), `human_status`, `human_successors`: the author's decision
+- `seconds`: time spent on the provision; `note`
+
+Because the verifier saw the proposals, the agreement estimates how often the consensus is accepted on review, not the accuracy of independent labelling.
+
+### 2.10 Known artifacts
 Provision texts are released exactly as extracted and used in the experiments, so that every number in the paper is reproducible. Some texts still contain page watermarks or footers of the issuing ministry's website (e.g. `jdih.kemdikbud.go.id`, about 380 occurrences in `amendment_provisions.jsonl`). Remove them for other uses (for example with the regular expression `(?:www\.)?jdih\.\w+\.go\.id`); doing so changes the similarity scores slightly and therefore the reproduced numbers.
 
 ---

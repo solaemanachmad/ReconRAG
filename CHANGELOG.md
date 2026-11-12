@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `data/replacement_verification.csv` and `results/verification.csv`: one author verified 50 consensus labels of the full-replacement set (50/50 confirmed; Wilson 95% interval 0.929-1.000).
+
 ## 1.1.0 (2026-11-12)
 
 Every number in the paper is now reproduced exactly by `python main.py --dense`, and `python main.py --check` verifies this in continuous integration.

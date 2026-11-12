@@ -11,6 +11,7 @@ from . import RESULTS
 TITLES = {
     "amendments": "Tier 1 - Amendments (implicit setting, test split, official gold labels)",
     "replacements": "Tier 1 - Full replacements (test split, macro-F1 against four silver references)",
+    "verification": "Tier 1 - Human verification of the three-model consensus on full replacements (one author, 50 provisions)",
     "retrieval": "Tier 2 - Retrieval (test split, k=5, share of questions; no LLM involved)",
     "answers": "Tier 2 - Answers (test split, LLM judge; stale = share of current-rule questions)",
     "significance": "Tier 2 - Exact McNemar tests, ReconRAG vs. prompt-based baselines (Holm-corrected)",
@@ -18,7 +19,7 @@ TITLES = {
 }
 
 
-KEYS = {"amendments": ["method"], "replacements": ["reference"], "retrieval": ["backend", "condition"],
+KEYS = {"amendments": ["method"], "replacements": ["reference"], "verification": ["status"], "retrieval": ["backend", "condition"],
         "answers": ["generator", "condition"], "significance": ["generator", "metric", "baseline"], "judge": ["grader"]}
 
 

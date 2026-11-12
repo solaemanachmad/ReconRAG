@@ -2,13 +2,13 @@
 
     python main.py                    # all tables and figures -> results/
     python main.py --dense            # also Dense and hybrid retrieval (pip install -e ".[dense]")
-    python main.py --only answers     # one part: amendments, replacements, retrieval, answers, judge, figures
+    python main.py --only answers     # one part: amendments, replacements, verification, retrieval, answers, judge, figures
     python main.py --check            # recompute and compare with results/ without overwriting (used in CI)
     python main.py --demo             # small example of ingest-time reconciliation
 
 Output (results/):
-    amendments.csv    replacements.csv    retrieval.csv    answers.csv
-    significance.csv  judge.csv           summary.md       figures/*.pdf
+    amendments.csv    replacements.csv    verification.csv    retrieval.csv
+    answers.csv       significance.csv    judge.csv           summary.md       figures/*.pdf
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-PARTS = ["amendments", "replacements", "retrieval", "answers", "judge", "figures"]
+PARTS = ["amendments", "replacements", "verification", "retrieval", "answers", "judge", "figures"]
 
 
 def demo() -> None:
@@ -67,6 +67,9 @@ def main() -> None:
         elif part == "replacements":
             from reconrag.evaluation import replacements
             new["replacements"] = replacements.run()
+        elif part == "verification":
+            from reconrag.evaluation import verification
+            new["verification"] = verification.run()
         elif part == "retrieval":
             from reconrag.evaluation import retrieval
             new["retrieval"] = retrieval.run(dense=a.dense)
