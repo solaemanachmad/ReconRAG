@@ -1,7 +1,7 @@
 {
   "title": "ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations (Code and Benchmark Dataset)",
   "upload_type": "dataset",
-  "description": "Code and benchmark for ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations. The benchmark covers 57 Indonesian ministerial regulation pairs: 1,199 provisions of 47 amendment pairs with gold labels derived from the official amendment instructions, and 444 provisions of 10 full replacements with silver labels from three LLMs. It includes 418 validated questions, the 2,926 frozen prompts, 5,852 graded model answers and 53 human-labelled answers. The code implements the three-layer reconciliation and reproduces every table and figure of the paper with `python main.py`. Code is released under the MIT license; data and annotations under CC-BY 4.0. Version 1.1.0 fixes a caching bug and aligns the full-replacement evaluation with the paper; see CHANGELOG.md.",
+  "description": "Code and benchmark for ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations. The benchmark covers 57 Indonesian ministerial regulation pairs: 1,199 provisions of 47 amendment pairs with gold labels derived from the official amendment instructions, and 444 provisions of 10 full replacements with silver labels from three LLMs. It includes 418 validated questions, the 2,926 frozen prompts, 5,852 graded model answers, 53 human-labelled answers, and 50 full-replacement labels verified by one author. The code implements the three-layer reconciliation and reproduces every table and figure of the paper with `python main.py`. Code is released under the MIT license; data and annotations under CC-BY 4.0. Version 1.2.0 adds the human verification of the full-replacement labels; version 1.1.0 fixed a caching bug and aligned the full-replacement evaluation with the paper. See CHANGELOG.md.",
   "creators": [
     {
       "name": "Solaeman, Achmad",
@@ -23,7 +23,7 @@
     "integer linear programming",
     "knowledge conflicts"
   ],
-  "version": "1.1.0",
+  "version": "1.2.0",
   "related_identifiers": [
     {
       "identifier": "https://github.com/solaemanachmad/ReconRAG",

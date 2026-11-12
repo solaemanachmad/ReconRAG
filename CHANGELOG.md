@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 (2026-11-12)
 
 ### Added
 - `data/replacement_verification.csv` and `results/verification.csv`: one author verified 50 consensus labels of the full-replacement set (50/50 confirmed; Wilson 95% interval 0.929-1.000).
