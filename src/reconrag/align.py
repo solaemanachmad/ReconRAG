@@ -12,6 +12,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
+import hashlib
 import numpy as np
 
 from .parser.tfidf import Tfidf, tokens
@@ -114,7 +115,7 @@ _ILP_LINKS_CACHE: dict[tuple, dict[int, list[int]]] = {}
 
 def global_ilp(old: list[dict], new: list[dict], S: np.ndarray, p: Params) -> Result:
     cache_key = (
-        id(S),
+        hashlib.sha1(np.ascontiguousarray(S).tobytes()).hexdigest(),  # content key (id(S) can be reused after GC)
         S.shape,
         p.tau,
         p.cap_old,

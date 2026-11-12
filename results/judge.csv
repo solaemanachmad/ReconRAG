@@ -1,0 +1,3 @@
+grader,n,agreed,agreement,kappa,correct_agreement,stale_agreement
+LLM judge (gemini-3.5-flash-lite),53,43,0.811,0.735,0.887,0.906
+Token rule,53,30,0.566,0.446,0.717,0.868

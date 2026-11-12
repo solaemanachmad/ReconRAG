@@ -15,7 +15,7 @@ While the underlying statutory provisions, questions, and answers are preserved 
 |---|---|---:|---|---|
 | **Regulation Metadata** | `regulations_metadata.csv` | 57 pairs | `dev`, `test` | 47 amendment pairs + 10 full replacement pairs with official BPK URLs and PDF SHA-256 hashes |
 | **Amendment Set (Gold)** | `amendment_provisions.jsonl` | 1,199 provisions | `dev` (373), `test` (826) | Provision-level texts (`old_text`, `in_force_text`), official `gold_status`, and `successor_articles` across `education`, `health`, and `manpower` |
-| **Replacement Set (Silver)** | `replacement_provisions.jsonl` | 444 provisions | `dev` (146), `test` (298) | Full repeal-and-replace provisions with independent 3-model silver annotations (`gemini`, `gptoss`, `claude`) and majority consensus |
+| **Replacement Set (Silver)** | `replacement_provisions.jsonl` | 444 provisions | `dev` (78), `test` (366) | Full repeal-and-replace provisions with independent 3-model silver annotations (`gemini`, `gptoss`, `claude`) and majority consensus |
 | **QA Benchmark** | `questions.jsonl` | 418 questions | `dev` (148), `test` (270) | Rule-validated questions covering `changed`, `unchanged`, `historical`, and `deleted` provisions |
 | **Model Outputs & Grades** | `model_answers.jsonl` | 5,852 outputs | `dev`, `test` | Full responses from `openai/gpt-oss-120b` and `qwen/qwen3.8-27b` across 7 RAG conditions, graded by both the LLM Judge and Token-Rule Grader |
 
@@ -61,9 +61,10 @@ Each line is a JSON object representing one base provision and its fate after th
 
 ### 2.3 `replacement_provisions.jsonl` (444 provisions)
 Each line represents a provision from a regulation that was repealed and replaced in full (without article-by-article mapping instructions):
-- `silver_gemini_status`, `silver_gptoss_status`, `silver_claude_status`: Independent status labels (`"unchanged"`, `"amended"`, `"deleted"`, `"non_substantive"`) assigned by three frontier LLMs.
+- `silver_gemini_status`, `silver_gptoss_status`, `silver_claude_status`: Independent status labels (`"unchanged"`, `"amended"`, `"deleted"`, `"non_substantive"`) assigned independently by three LLMs (`gemini-3.5-flash-lite`, `gpt-oss-120b`, and a blind Claude agent). `non_substantive` marks non-rule provisions (definitions, commencement and repeal clauses) and is scored as the class `non_rule`.
 - `silver_*_successors`: List of successor article numbers in `new_regulation_id` identified by each model.
-- `silver_consensus_status` & `silver_consensus_successors`: Majority vote ($\ge 2$ of 3 models) and successor intersection.
+- `silver_consensus_status` & `silver_consensus_successors`: Majority vote ($\ge 2$ of 3 models) and successor intersection, provided for convenience.
+- **Note:** the *three-model consensus* reference used in the paper is stricter: all three annotators agree on the status and, for unchanged/amended provisions, share at least one successor (test $n=275$). `scripts/reconcile/replacements.py` derives it from the per-model columns; the single-model references use all 366 test provisions. Splits are by family of new regulations (dev: 3 new regulations, test: 4).
 
 ### 2.4 `questions.jsonl` (418 questions)
 Each line is a validated question paired with both the currently valid answer and the superseded answer:
@@ -86,7 +87,7 @@ Each line is a validated question paired with both the currently valid answer an
   - `"changed"` ($n=109$; 70 test): Asks about the current rule for an amended provision (correct answer = `in_force_answer`; answering with `superseded_answer` counts as `"stale"`).
   - `"unchanged"` ($n=188$; 124 test): Control questions on unamended provisions from the base regulation.
   - `"historical"` ($n=109$; 70 test): Explicitly asks about the rule *prior* to the amendment (correct answer = `superseded_answer`).
-  - `"deleted"` ($n=12$; 6 test): Asks about a repealed provision (correct answer = stating that the provision was deleted/repealed or abstaining; answering with `superseded_answer` counts as `"stale"`).
+  - `"deleted"` ($n=12$; 6 test): Asks about a repealed provision (correct answer = stating that the provision was deleted/repealed; "not found" is graded `"abstain"`; answering with `superseded_answer` counts as `"stale"`).
 
 ### 2.5 `model_answers.jsonl` (5,852 graded outputs)
 Contains every generated answer across both open-weight generators (`openai/gpt-oss-120b` and `qwen/qwen3.8-27b`) and all experimental conditions:
@@ -104,6 +105,29 @@ Contains every generated answer across both open-weight generators (`openai/gpt-
   - `"mixed"`: Mentions both versions without resolving which applies.
   - `"abstain"`: Outputs `"TIDAK DITEMUKAN"` (not found).
   - `"other"`: Incorrect or irrelevant answer.
+- `llm_judge_label` is available for all test answers (3 answers of `gpt-oss-120b` could not be parsed and are `null`) and for the 88 dev answers that entered the human validation sample; other dev answers were not graded by the LLM judge and are `null`. `token_rule_label` is available for all answers.
+
+### 2.6 `answer_prompts.jsonl` (2,926 frozen prompts)
+The exact prompt sent to both generators for every question and condition (one record per `question_id` × `condition`; the same prompt was used for both models, at temperature 0):
+- `question_id`, `legacy_qid`, `split`, `condition`, `legacy_condition_code`
+- `context_provision_ids`: the $k=5$ provision chunks in the context, in prompt order (ids as in the retrieval archive built by `reconrag.rag.build_archive`)
+- `context_status`: status shown for each chunk (`"in_force"`, `"superseded"`, `"deleted"`); for the baselines every chunk is shown without a status, recorded as `"in_force"`
+- `prompt`: full prompt text (instruction, context, question)
+
+`ReconRAGBench(k=5).context(question, condition)` regenerates `context_provision_ids` exactly for all 2,926 records.
+
+### 2.7 `layer3_decisions.jsonl` (442 decisions)
+Cached Layer-3 decisions of `gemini-3.5-flash-lite` for every pair flagged as amended by Layer 2:
+- `setting`: `"amendment_implicit"` or `"replacement"`; `split`; `provision_id`
+- `llm_decision`: `"substantive"`, `"editorial"`, `"different_provision"` or `"unsure"`; `model`
+
+### 2.8 `judge_validation.csv` (53 answers)
+Stratified sample of answers labelled by one of the authors without seeing the automatic labels:
+- `sample_id`, `question_id`, `generator_model`, `condition`
+- `human_label`, `llm_judge_label`, `token_rule_label` (labels as in `model_answers.jsonl`)
+
+### 2.9 Known artifacts
+Provision texts are released exactly as extracted and used in the experiments, so that every number in the paper is reproducible. Some texts still contain page watermarks or footers of the issuing ministry's website (e.g. `jdih.kemdikbud.go.id`, about 380 occurrences in `amendment_provisions.jsonl`). Remove them for other uses (for example with the regular expression `(?:www\.)?jdih\.\w+\.go\.id`); doing so changes the similarity scores slightly and therefore the reproduced numbers.
 
 ---
 
@@ -131,9 +155,9 @@ stale = sum(r["llm_judge_label"] == "stale" for r in cur) / len(cur)
 print(f"Total accuracy: {acc:.2%} | Stale rate on current-rule questions: {stale:.2%}")
 ```
 
-To run all evaluation tables and reproduce the paper results:
+To reproduce all tables and figures of the paper (written to `results/`), run from the repository root:
 ```bash
-python scripts/reproduce.py
+python main.py
 ```
 
 ---

@@ -39,7 +39,7 @@ def build_archive() -> tuple[list[dict], list[dict]]:
             continue
         b, m = r["old_regulation_id"], r["new_regulation_id"]
         tb = re.sub(r"\s*-\s*JDIH BPK$", "", r["old_title"] or b)
-        tm = (r["new_title"] or m).split(" - Perubahan Atas ")[0].strip()
+        tm = re.split(r"\s+-\s+(?=Perubahan)", r["new_title"] or m, flags=re.I)[0].strip()
         base_doc = _load_doc(b)
         amd_doc = _load_doc(m)
         amd_text = amd_doc.get("full_text", "")

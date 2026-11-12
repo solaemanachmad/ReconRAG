@@ -1,0 +1,13 @@
+generator,metric,baseline,questions,baseline_only,reconrag_only,p,p_holm
+openai/gpt-oss-120b,stale,Naive_RAG,76,16,3,0.0044,0.0133
+openai/gpt-oss-120b,stale,Recency_Prompt,76,12,3,0.0352,0.0703
+openai/gpt-oss-120b,stale,Query_Time_Judge,76,14,5,0.0636,0.0703
+openai/gpt-oss-120b,accuracy,Naive_RAG,267,7,46,0.0,0.0
+openai/gpt-oss-120b,accuracy,Recency_Prompt,267,13,21,0.2295,0.459
+openai/gpt-oss-120b,accuracy,Query_Time_Judge,267,15,19,0.6076,0.6076
+qwen/qwen3.8-27b,stale,Naive_RAG,76,21,0,0.0,0.0
+qwen/qwen3.8-27b,stale,Recency_Prompt,76,20,0,0.0,0.0
+qwen/qwen3.8-27b,stale,Query_Time_Judge,76,18,1,0.0001,0.0001
+qwen/qwen3.8-27b,accuracy,Naive_RAG,270,3,48,0.0,0.0
+qwen/qwen3.8-27b,accuracy,Recency_Prompt,270,8,15,0.21,0.4201
+qwen/qwen3.8-27b,accuracy,Query_Time_Judge,270,14,17,0.7201,0.7201

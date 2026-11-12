@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reconrag"
-version = "1.0.0"
+version = "1.1.0"
 description = "ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,6 +26,7 @@ dependencies = [
     "scipy>=1.11",
     "pypdfium2>=4.25",
     "rank-bm25>=0.2.2",
+    "matplotlib>=3.8",
 ]
 
 [project.optional-dependencies]
@@ -34,7 +35,6 @@ dense = [
 ]
 dev = [
     "pytest>=8.0",
-    "matplotlib>=3.8",
 ]
 
 [tool.setuptools.packages.find]

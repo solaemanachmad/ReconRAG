@@ -1,31 +1,20 @@
-"""Tier 2 Multi-Backend Retrieval Evaluation.
+"""Tier 2: what the generator would see. Retrieval with k=5 on the test questions, without any LLM.
 
-Evaluates 4 retrieval backends (TF-IDF, BM25, Dense MiniLM, Hybrid RRF) across
-the test split of ``data/questions.jsonl`` (k=5 retrieved provisions).
-
-Usage:
-    python scripts/rag/retrieval.py            # Fast lexical (TF-IDF + BM25)
-    python scripts/rag/retrieval.py --dense    # Full 4-backend incl. Dense MiniLM & Hybrid RRF
+Backends: TF-IDF and BM25 always; Dense (multilingual MiniLM) and hybrid RRF with ``dense=True``
+(needs ``pip install -e ".[dense]"``).
 """
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
-import sys
 from collections import defaultdict
-from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
-
-from reconrag.parser.tfidf import tokens  # noqa: E402
-from reconrag.rag import CONDITION_LABELS, ReconRAGBench, Retriever  # noqa: E402
-
-DATA_DIR = ROOT / "data"
+from ..parser.tfidf import tokens
+from ..rag import ReconRAGBench, Retriever
+from . import DATA as DATA_DIR
 
 
 class BM25Retriever:
@@ -53,7 +42,7 @@ class DenseRetriever:
 
         self.chunks = chunks
         self.model = SentenceTransformer(model_name)
-        texts = [f"{c['title']} Pasal {c['article']}: {c['text'][:600]}" for c in chunks]
+        texts = [f"{c['title']} - Pasal {c['article']}: {c['text']}" for c in chunks]  # as in the paper's run
         self.emb = self.model.encode(texts, normalize_embeddings=True, show_progress_bar=False, batch_size=64)
 
     def search(self, q: str, k: int = 5, allow=None) -> list[tuple[float, int]]:
@@ -75,49 +64,32 @@ class HybridRetriever:
         self.k_rrf = k_rrf
 
     def search(self, q: str, k: int = 5, allow=None) -> list[tuple[float, int]]:
-        d_hits = self.dense.search(q, k=len(self.chunks), allow=allow)
-        b_hits = self.bm25.search(q, k=len(self.chunks), allow=allow)
+        # fuse the top 4k candidates of each retriever (as in the paper's run); ties keep insertion order
+        d_hits = self.dense.search(q, k=4 * k, allow=allow)
+        b_hits = self.bm25.search(q, k=4 * k, allow=allow)
         rrf: dict[int, float] = defaultdict(float)
         for rank, (_, idx) in enumerate(d_hits, start=1):
             rrf[idx] += 1.0 / (self.k_rrf + rank)
         for rank, (_, idx) in enumerate(b_hits, start=1):
             rrf[idx] += 1.0 / (self.k_rrf + rank)
-        return sorted(((score, idx) for idx, score in rrf.items()), reverse=True)[:k]
+        return [(score, idx) for idx, score in sorted(rrf.items(), key=lambda x: x[1], reverse=True)[:k]]
 
 
-def main(with_dense: bool = False) -> dict:
-    print("=" * 88)
-    print("2. TIER 2: MULTI-BACKEND RETRIEVAL BENCHMARK (test split, k=5)")
-    print("=" * 88)
+CONDITIONS = ["Recency_Prompt", "Latest_Doc", "ReconRAG_StatusOnly", "ReconRAG", "ReconRAG_Route", "Oracle"]
+
+
+def run(dense: bool = False) -> list[dict]:
     norm = lambda t: re.sub(r"\s+", " ", re.sub(r"[^\w\s%/.,()-]", " ", t.lower())).strip()
-    qa = [
-        json.loads(line)
-        for line in open(DATA_DIR / "questions.jsonl", encoding="utf-8")
-        if line.strip() and json.loads(line)["split"] == "test"
-    ]
-    bench_base = ReconRAGBench(k=5)
-    chunks = bench_base.chunks
-
-    backends: list[tuple[str, object]] = [
-        ("TF-IDF", Retriever(chunks)),
-        ("BM25", BM25Retriever(chunks)),
-    ]
-    if with_dense:
+    qa = [q for q in map(json.loads, open(DATA_DIR / "questions.jsonl", encoding="utf-8")) if q["split"] == "test"]
+    chunks = ReconRAGBench(k=5).chunks
+    backends: list[tuple[str, object]] = [("TF-IDF", Retriever(chunks)), ("BM25", BM25Retriever(chunks))]
+    if dense:
         ret_dense = DenseRetriever(chunks)
-        backends.append(("Dense (MiniLM)", ret_dense))
-        backends.append(("Hybrid (BM25+Dense)", HybridRetriever(ret_dense, backends[1][1])))  # type: ignore[arg-type]
-
-    cond_list = ["Recency_Prompt", "Latest_Doc", "ReconRAG_StatusOnly", "ReconRAG", "ReconRAG_Route", "Oracle"]
-    print(
-        f"{'Backend':<20} | {'Condition':<28} | {'Changed↑':>8} | {'Stale↓':>7} | "
-        f"{'Unch.↑':>7} | {'Hist.↑':>7} | {'DelStale↓':>9}"
-    )
-    print("-" * 88)
-    results = {}
+        backends += [("Dense", ret_dense), ("Hybrid", HybridRetriever(ret_dense, backends[1][1]))]  # type: ignore[arg-type]
+    rows = []
     for b_name, ret in backends:
         bench = ReconRAGBench(k=5, retriever=ret)
-        results[b_name] = {}
-        for c in cond_list:
+        for c in CONDITIONS:
             m = defaultdict(list)
             for q in qa:
                 seen = [(norm(x["raw"]), x["status"]) for x in bench.context(q["question"], c)]
@@ -132,27 +104,8 @@ def main(with_dense: bool = False) -> dict:
                 elif qt == "historical":
                     m["hist"].append(any(jl in t for t, _ in seen))
                 elif qt == "deleted":
-                    m["del_stale"].append(any(jl in t for t in cur))
-            avg = lambda k: sum(m[k]) / len(m[k])
-            row_metrics = {
-                "changed_in_force": avg("chg"),
-                "changed_stale": avg("stale"),
-                "unchanged_kept": avg("unch"),
-                "historical_recalled": avg("hist"),
-                "deleted_stale": avg("del_stale"),
-            }
-            results[b_name][c] = row_metrics
-            print(
-                f"{b_name:<20} | {CONDITION_LABELS[c]:<28} | {row_metrics['changed_in_force']:8.3f} | "
-                f"{row_metrics['changed_stale']:7.3f} | {row_metrics['unchanged_kept']:7.3f} | "
-                f"{row_metrics['historical_recalled']:7.3f} | {row_metrics['deleted_stale']:9.3f}"
-            )
-        print("-" * 88)
-    return results
-
-
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dense", action="store_true", help="Include Dense (MiniLM) and Hybrid RRF backends.")
-    args = ap.parse_args()
-    main(with_dense=args.dense)
+                    m["del"].append(any(jl in t for t in cur))
+            avg = lambda k: round(sum(m[k]) / len(m[k]), 3)
+            rows.append({"backend": b_name, "condition": c, "changed_inforce": avg("chg"), "changed_stale": avg("stale"),
+                         "unchanged": avg("unch"), "historical": avg("hist"), "deleted_stale": avg("del")})
+    return rows

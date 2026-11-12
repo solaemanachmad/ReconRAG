@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this code or benchmark, please cite it as below."
+title: "ReconRAG: Ingest-Time Version Reconciliation for Retrieval-Augmented Generation over Evolving Regulations (Code and Benchmark Dataset)"
+type: software
+version: 1.1.0
+date-released: 2026-11-12
+authors:
+  - family-names: Solaeman
+    given-names: Achmad
+    affiliation: "Department of Electrical Engineering and Informatics, Vocational College, Universitas Gadjah Mada"
+  - family-names: Wibirama
+    given-names: Sunu
+    affiliation: "Department of Electrical Engineering and Information Technology, Universitas Gadjah Mada"
+repository-code: "https://github.com/solaemanachmad/ReconRAG"
+license: MIT
+keywords:
+  - retrieval-augmented generation
+  - version reconciliation
+  - knowledge conflicts
+  - legal NLP
+  - Indonesian law
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24054470
+    description: "Zenodo archive of version 1.0.0"

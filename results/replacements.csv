@@ -1,0 +1,5 @@
+reference,n,per_provision,global_ilp,layer3_safe,layer3_auto,stale_safe,stale_auto,escalated,escalated_share,llm_calls
+Three-model consensus,275,0.767,0.808,0.842,0.842,0,0,15,0.055,141
+Claude,366,0.649,0.695,0.755,0.73,0,1,24,0.066,200
+Gemini (also layer 3),366,0.704,0.745,0.801,0.773,0,2,24,0.066,200
+gpt-oss,366,0.688,0.695,0.716,0.7,4,13,24,0.066,200

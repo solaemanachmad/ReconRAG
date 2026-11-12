@@ -1,0 +1,7 @@
+method,n,macro_f1,accuracy,link_accuracy,deleted_f1,stale_kept,escalated,llm_calls
+Per-provision + character ratio,826,0.761,0.985,0.99,0.333,4,,
+Global ILP + character ratio,826,0.843,0.988,0.991,0.571,4,,
+Per-provision + conservative diff,826,0.764,0.988,0.99,0.333,2,,
+ReconRAG layers 1-2 (global ILP + diff),826,0.846,0.99,0.991,0.571,2,,
+"ReconRAG + layer 3, automatic",826,0.844,0.989,0.991,0.571,3,,
+"ReconRAG + layer 3, safe policy",826,0.846,0.99,0.991,0.571,2,1,123

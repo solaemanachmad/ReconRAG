@@ -1,12 +1,9 @@
-"""Generate all vector PDF figures (Figures 2, 3, 4, 5, 6) into ``paper/figures/``.
-
-Usage:
-    python scripts/figures/plot_all.py
-"""
+"""Paper figures, drawn from the CSV tables in ``results/`` and written to ``results/figures/`` as vector PDF."""
 
 from __future__ import annotations
 
-from pathlib import Path
+import csv
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -14,9 +11,25 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib.lines import Line2D
 
-ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "paper" / "figures"
-OUT.mkdir(parents=True, exist_ok=True)
+from . import RESULTS
+
+OUT = RESULTS / "figures"
+SHORT = {"openai/gpt-oss-120b": "gpt-oss-120b", "qwen/qwen3.8-27b": "qwen3.8-27b"}
+FIG_CODES = {"Naive_RAG": "B0", "Recency_Prompt": "B1", "Latest_Doc": "B2", "Query_Time_Judge": "Q", "ReconRAG": "ReconRAG"}
+FIG_NAMES = {"Naive_RAG": "Naive RAG", "Latest_Doc": "Latest doc", "Recency_Prompt": "Recency prompt",
+             "Query_Time_Judge": "Query-time judge", "ReconRAG": "ReconRAG"}
+
+
+def _table(name: str) -> list[dict]:
+    return list(csv.DictReader(open(RESULTS / f"{name}.csv", encoding="utf-8")))
+
+
+def _answers() -> dict:
+    out: dict = {}
+    for r in _table("answers"):
+        out.setdefault(SHORT[r["generator"]], {})[r["condition"]] = {k: (float(v) if k not in ("generator", "condition") else v)
+                                                                     for k, v in r.items()}
+    return out
 
 COL_RECON   = "#1d4ed8"   # Royal Blue — ReconRAG
 COL_JUDGE   = "#7c3aed"   # Violet — Query-time judge
@@ -49,22 +62,8 @@ plt.rcParams.update({
 
 
 def make_fig2() -> None:
-    res = {
-        "gpt-oss-120b": {
-            "B0": (.33, .51),
-            "B1": (.28, .63),
-            "B2": (.05, .27),
-            "Q":  (.28, .64),
-            "ReconRAG": (.16, .66),
-        },
-        "qwen3.8-27b": {
-            "B0": (.32, .51),
-            "B1": (.30, .66),
-            "B2": (.04, .24),
-            "Q":  (.26, .67),
-            "ReconRAG": (.04, .68),
-        },
-    }
+    ans = _answers()
+    res = {m: {FIG_CODES[c]: (ans[m][c]["stale"], ans[m][c]["accuracy"]) for c in FIG_CODES} for m in ans}
     style_map = {
         "B0":       ("Naive RAG",        COL_NAIVE,   "o", 46),
         "B1":       ("Recency prompt",   COL_RECENCY, "s", 48),
@@ -125,29 +124,16 @@ def make_fig2() -> None:
 
     axs[0].set_ylabel("Total Accuracy Across All Questions (↑)")
     fig.tight_layout()
-    fig.savefig(OUT / "fig2_stale_vs_accuracy.pdf", dpi=300)
+    fig.savefig(OUT / "stale_accuracy.pdf", dpi=300)
     plt.close(fig)
-    print("✓ fig2_stale_vs_accuracy.pdf generated")
 
 
 def make_fig3() -> None:
     types = ["Changed", "Unchanged", "Historical"]
-    by = {
-        "gpt-oss-120b": {
-            "Naive RAG":        [.34, .83, .17],
-            "Latest doc":       [.83, .11, .01],
-            "Recency prompt":   [.51, .82, .47],
-            "Query-time judge": [.51, .85, .47],
-            "ReconRAG":         [.57, .83, .51],
-        },
-        "qwen3.8-27b": {
-            "Naive RAG":        [.37, .84, .13],
-            "Latest doc":       [.87, .03, .01],
-            "Recency prompt":   [.54, .84, .50],
-            "Query-time judge": [.57, .85, .51],
-            "ReconRAG":         [.67, .84, .47],
-        },
-    }
+    ans = _answers()
+    order = ["Naive_RAG", "Latest_Doc", "Recency_Prompt", "Query_Time_Judge", "ReconRAG"]
+    by = {m: {FIG_NAMES[c]: [ans[m][c]["changed"], ans[m][c]["unchanged"], ans[m][c]["historical"]] for c in order}
+          for m in ans}
 
     colors = {
         "Naive RAG":        "#94a3b8",
@@ -197,16 +183,17 @@ def make_fig3() -> None:
         fontsize=7.5, ncol=5, loc="lower center", bbox_to_anchor=(0.5, -0.02),
     )
     fig.tight_layout(rect=(0, 0.08, 1, 1))
-    fig.savefig(OUT / "fig3_by_question_type.pdf", dpi=300)
+    fig.savefig(OUT / "question_types.pdf", dpi=300)
     plt.close(fig)
-    print("✓ fig3_by_question_type.pdf generated")
 
 
 def make_fig4() -> None:
-    refs = ["Three-model consensus", "Claude 3.5 Sonnet", "Gemini 3.5 Flash Lite*", "GPT-OSS 120B"]
-    pp = [.767, .649, .704, .688]
-    gl = [.808, .695, .745, .695]
-    l3 = [.842, .755, .773, .716]
+    rows = _table("replacements")
+    refs = ["Three-model consensus", "Claude", "Gemini*", "gpt-oss"]
+    pp = [float(r["per_provision"]) for r in rows]
+    gl = [float(r["global_ilp"]) for r in rows]
+    # Gemini is also the layer-3 model, so its row uses the automatic policy (no curator simulated with Gemini labels)
+    l3 = [float(r["layer3_auto"] if r["reference"].startswith("Gemini") else r["layer3_safe"]) for r in rows]
 
     fig, ax = plt.subplots(figsize=(5.5, 2.4))
 
@@ -232,16 +219,17 @@ def make_fig4() -> None:
               loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3, columnspacing=0.6,
               handletextpad=0.2, borderaxespad=0.2)
     fig.tight_layout()
-    fig.savefig(OUT / "fig4_replacement_robustness.pdf", dpi=300)
+    fig.savefig(OUT / "replacement.pdf", dpi=300)
     plt.close(fig)
-    print("✓ fig4_replacement_robustness.pdf generated")
 
 
 def make_fig5() -> None:
     conds = ["Unreconciled RAG", "Latest doc", "Status labels only", "ReconRAG"]
-    present = [.643, .971, .643, .786]
-    unmarked = [.786, .043, .100, .114]
-    unch = [.919, .185, .911, .911]
+    tf = {r["condition"]: r for r in _table("retrieval") if r["backend"] == "TF-IDF"}
+    keys = ["Recency_Prompt", "Latest_Doc", "ReconRAG_StatusOnly", "ReconRAG"]
+    present = [float(tf[k]["changed_inforce"]) for k in keys]
+    unmarked = [float(tf[k]["changed_stale"]) for k in keys]
+    unch = [float(tf[k]["unchanged"]) for k in keys]
 
     # Consistent method colors across all panels
     col_methods = ["#94a3b8", "#f59e0b", "#14b8a6", "#1d4ed8"]
@@ -271,25 +259,16 @@ def make_fig5() -> None:
     axs[0].set_yticklabels(conds, fontweight="bold")
     axs[0].invert_yaxis()
     fig.tight_layout()
-    fig.savefig(OUT / "fig5_retrieval.pdf", dpi=300)
+    fig.savefig(OUT / "retrieval.pdf", dpi=300)
     plt.close(fig)
-    print("✓ fig5_retrieval.pdf generated")
 
 
 def make_fig6() -> None:
     conds = ["Naive RAG", "Recency prompt", "Latest doc", "Query-time judge", "ReconRAG"]
-    acc = {
-        "gpt-oss-120b": [(.51, .45, .57), (.63, .56, .69), (.27, .24, .30),
-                         (.64, .58, .70), (.66, .61, .71)],
-        "qwen3.8-27b":  [(.51, .45, .58), (.66, .59, .72), (.24, .22, .27),
-                         (.67, .60, .73), (.68, .62, .75)],
-    }
-    stale = {
-        "gpt-oss-120b": [(.33, .22, .47), (.28, .18, .40), (.05, .01, .12),
-                         (.28, .17, .42), (.16, .09, .24)],
-        "qwen3.8-27b":  [(.32, .21, .45), (.30, .20, .42), (.04, .00, .09),
-                         (.26, .16, .40), (.04, .00, .08)],
-    }
+    codes = ["Naive_RAG", "Recency_Prompt", "Latest_Doc", "Query_Time_Judge", "ReconRAG"]
+    ans = _answers()
+    acc = {m: [(ans[m][c]["accuracy"], ans[m][c]["accuracy_low"], ans[m][c]["accuracy_high"]) for c in codes] for m in ans}
+    stale = {m: [(ans[m][c]["stale"], ans[m][c]["stale_low"], ans[m][c]["stale_high"]) for c in codes] for m in ans}
     row_colors = [COL_NAIVE, COL_RECENCY, COL_LATEST, COL_JUDGE, COL_RECON]
     markers = {"gpt-oss-120b": ("o", -0.16), "qwen3.8-27b": ("s", 0.16)}
 
@@ -337,15 +316,12 @@ def make_fig6() -> None:
     fig.legend(handles=h, loc="lower center", ncol=3, frameon=False, fontsize=7.2,
                bbox_to_anchor=(0.53, -0.01))
     fig.tight_layout(rect=(0, 0.07, 1, 1))
-    fig.savefig(OUT / "fig6_accuracy_ci.pdf", dpi=300)
+    fig.savefig(OUT / "accuracy_ci.pdf", dpi=300)
     plt.close(fig)
-    print("✓ fig6_accuracy_ci.pdf generated")
 
 
-if __name__ == "__main__":
-    make_fig2()
-    make_fig3()
-    make_fig4()
-    make_fig5()
-    make_fig6()
-    print("All paper figures generated into paper/figures/")
+def run() -> list[str]:
+    OUT.mkdir(parents=True, exist_ok=True)
+    for make in (make_fig2, make_fig3, make_fig4, make_fig5, make_fig6):
+        make()
+    return sorted(p.name for p in OUT.glob("*.pdf"))
